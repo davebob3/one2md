@@ -11,5 +11,6 @@ target/
 *.pdb
 
 # Project specific ignores
+test_in/
 test_output/
 *.pdf
