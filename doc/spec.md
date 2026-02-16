@@ -167,8 +167,10 @@ An `Element` `OutlineItem` is a list of `Content` objects. It is an enumerated t
 When an `Element` `OutlineItem` is encountered:
 
 - `one2md` shall indent the current line based on the child level of this `Element`.
-- `one2md` shall determine if this `Element` is part of a numbered list, a bulleted list or not. A list item is a numbered list if it contains the numbering character 0xFFFD, which MUST be immediately followed by a numbering format character. There MUST NOT be more than one numbering character in the array. All other characters in the array MUST be valid Unicode characters. The list item is a bulleted list if it does not contain the numbering character.
-- `one2md` shall render "1." if it is a numbered list or "- " if it is a bulleted list. 
+- `one2md` shall determine if this `Element` is part of a numbered list, a bulleted list, or neither by inspecting the `OutlineElement`'s `list_contents()`. If `list_contents()` is non-empty, the element is a list item. The first `List` entry's `list_format()` determines the type:
+  - If `list_format()[0]` is `\u{FFFD}` (the numbering sentinel), it is a **numbered list**. The second character indicates the format (`\u{0}` = decimal, `\u{1}` = upper roman, `\u{2}` = lower roman, `\u{3}` = upper latin, `\u{4}` = lower latin). `list_restart()` indicates a custom start number.
+  - Otherwise, it is a **bulleted list** (the character is the bullet symbol, e.g., `•`).
+- `one2md` shall render "1." if it is a numbered list or "- " if it is a bulleted list. If `list_contents()` is empty, no list prefix is rendered.
 - `one2md` shall render markdown for each `Content` in the `Element` in the current page document.
 
 If this `Element` has children, `one2md` shall render markdown for each `OutlineItem` in the children list in the current page document.
@@ -221,13 +223,35 @@ If there are 1 or more indices, then:
 
 ##### Converting the paragraph style to Markdown
 
-Initially, we are only concerning ourselves with bold and italics text. Text runs will be surrounded by the appropriate start and end formatting strings.
+Text runs will be surrounded by the appropriate start and end formatting strings based on the run style and/or paragraph style.
 
 `one2md` shall start with empty starting and ending formatting strings.
 
+###### Heading Detection
+
+If the paragraph style's `style_id()` returns a heading tag (e.g., "h1", "h2", "h3", "h4", "h5", "h6"), `one2md` shall render the paragraph as a Markdown heading instead of inline formatting. The heading level maps to Markdown heading prefixes:
+- "h1" → "# "
+- "h2" → "## "
+- "h3" → "### "
+- "h4" → "#### "
+- "h5" → "##### "
+- "h6" → "###### "
+
+System style IDs such as "PageTitle" and "PageDateTime" shall not be treated as headings.
+
+###### Inline Formatting
+
 If the run style or paragraph style is bold, `one2md` shall push "**" into the starting and ending markdown strings.
 
-If the run style or paragraph style is italic, `one2md` shall push "**\" into the starting and ending markdown strings.
+If the run style or paragraph style is italic, `one2md` shall push "*" into the starting and ending markdown strings.
+
+If the run style or paragraph style is strikethrough, `one2md` shall push "~~" into the starting and ending markdown strings.
+
+If the run style or paragraph style is underline, `one2md` shall push "<u>" into the starting markdown string and "</u>" into the ending markdown string.
+
+###### Hyperlinks
+
+If a text run's paragraph styling has `hyperlink()` returning true, `one2md` shall treat consecutive hyperlink-flagged runs as a single hyperlink. The hyperlink URL is extracted from the text content (the URL portion). `one2md` shall render the hyperlink as `[display text](url)` in Markdown.
 
 ##### Table
 
@@ -245,3 +269,35 @@ Then, for Each `TableRow`:
   - `one2md` shall skip embedded tables.
   - `one2md` shall render all text into a single line.
 - `one2md` shall render a final "|" (pipe character).
+
+## Module Architecture
+
+`one2md` is organized into the following modules:
+
+```
+src/
+├── main.rs                  # CLI entry point (clap-based argument parsing)
+├── notebook/
+│   ├── mod.rs               # Notebook/Section traversal and directory creation
+│   └── name_utils.rs        # Filename sanitization and unique name generation
+├── renderers/
+│   ├── mod.rs               # RenderContext and common rendering types
+│   └── readme/
+│       ├── mod.rs           # ReadmeRenderer: page → README.md orchestration
+│       ├── rich_text.rs     # RichText → Markdown (formatting, headings, hyperlinks)
+│       ├── list.rs          # List detection (numbered/bulleted) and rendering
+│       ├── table.rs         # Table → Markdown table
+│       ├── image.rs         # Image extraction and Markdown reference
+│       ├── embedded.rs      # EmbeddedFile extraction and Markdown link
+│       ├── outline.rs       # Outline/OutlineItem traversal with indentation
+│       └── content.rs       # Content enum dispatcher
+```
+
+### main.rs
+Parses CLI arguments using `clap` (derive mode). Dispatches to `notebook` module based on input file type (`.onetoc2` for notebooks, `.one` for sections).
+
+### notebook module
+Handles file I/O and directory structure creation. Opens OneNote files via `onenote_parser::Parser`. Traverses `Notebook` → `SectionEntry` → `Section` → `PageSeries` → `Page`. Creates section and page directories, generates section `README.md` with page links, and delegates page content rendering to the `renderers` module.
+
+### renderers module
+Contains the `RenderContext` struct that tracks state during rendering (current page directory, embedded file directory, dry-run mode, overwrite flag, unique name counters). The `readme` submodule implements Markdown rendering for each OneNote content type. Each content type has its own file for separation of concerns.
