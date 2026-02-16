@@ -13,6 +13,7 @@ pub fn cook_name(name: &str) -> String {
         })
         .collect();
     let trimmed = cooked.trim().to_string();
+    let trimmed = trimmed.trim_matches('_').to_string();
     if trimmed.is_empty() {
         "_".to_string()
     } else {
@@ -61,7 +62,7 @@ pub fn unique_file_name(filename: &str, dir: &Path) -> String {
 }
 
 fn is_invalid_filename_char(c: char) -> bool {
-    matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0')
+    matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0' | ' ')
 }
 
 #[cfg(test)]
@@ -72,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_cook_name_simple() {
-        assert_eq!(cook_name("Hello World"), "Hello World");
+        assert_eq!(cook_name("Hello World"), "Hello_World");
     }
 
     #[test]
@@ -90,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_cook_name_preserves_unicode() {
-        assert_eq!(cook_name("café résumé"), "café résumé");
+        assert_eq!(cook_name("café résumé"), "café_résumé");
     }
 
     #[test]
