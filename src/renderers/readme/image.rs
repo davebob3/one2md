@@ -33,7 +33,7 @@ pub fn render_image(image: &Image, ctx: &mut RenderContext) -> String {
             unique_name,
             data.len()
         );
-    } else if let Err(e) = fs::write(embedded_dir.join(&unique_name), data) {
+    } else if let Err(e) = fs::write(embedded_dir.join(&unique_name), &*data) {
         warn!("Failed to write image: {}", e);
         return String::new();
     }

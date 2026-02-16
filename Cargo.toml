@@ -9,7 +9,7 @@ edition = "2021"
 clap = { version = "4.5", features = ["derive"] }
 env_logger = "0.11.1"
 log = "0.4.20"
-onenote_parser = "1.1"
+onenote_parser = { path = "/Users/Dave/source/repos/joplin/packages/onenote-converter/parser", package = "parser" }
 once_cell = "1.21.3"
 itertools = "0.14.0"
 

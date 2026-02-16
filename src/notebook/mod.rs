@@ -18,7 +18,7 @@ pub struct ConvertOptions {
 
 /// Top-level entry point: dispatch based on file extension.
 pub fn convert(input: &Path, dest: &Path, opts: &ConvertOptions) -> io::Result<()> {
-    let parser = Parser::new();
+    let mut parser = Parser::new();
 
     let ext = input
         .extension()
@@ -26,10 +26,12 @@ pub fn convert(input: &Path, dest: &Path, opts: &ConvertOptions) -> io::Result<(
         .unwrap_or("")
         .to_lowercase();
 
+    let input_str = input.to_string_lossy().to_string();
+
     match ext.as_str() {
         "onetoc2" => {
             let notebook = parser
-                .parse_notebook(input)
+                .parse_notebook(input_str)
                 .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
             for entry in notebook.entries() {
                 process_section_entry(entry, dest, opts)?;
@@ -37,7 +39,7 @@ pub fn convert(input: &Path, dest: &Path, opts: &ConvertOptions) -> io::Result<(
         }
         "one" => {
             let section = parser
-                .parse_section(input)
+                .parse_section(input_str)
                 .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
             process_section(&section, dest, opts)?;
         }

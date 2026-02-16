@@ -45,7 +45,7 @@ fn find_test_section() -> Option<PathBuf> {
         .find(|p| p.extension().map_or(false, |ext| ext == "one"))
 }
 
-fn _find_test_notebook() -> Option<PathBuf> {
+fn find_test_notebook() -> Option<PathBuf> {
     let dir = test_input_dir();
     if !dir.exists() {
         return None;
@@ -165,6 +165,82 @@ fn test_convert_section_full() {
     };
 
     let out_dir = setup_output_dir("section_full");
+
+    let output = Command::new(binary_path())
+        .args([
+            "--filename",
+            input.to_str().unwrap(),
+            "--destination-directory",
+            out_dir.to_str().unwrap(),
+            "--should-overwrite",
+        ])
+        .output()
+        .expect("Failed to run binary");
+
+    assert!(
+        output.status.success(),
+        "Full convert should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    // Verify: a section directory should exist
+    let section_dirs: Vec<_> = fs::read_dir(&out_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().map_or(false, |t| t.is_dir()))
+        .collect();
+    assert!(
+        !section_dirs.is_empty(),
+        "Should have created at least one section directory"
+    );
+
+    // Verify: section directory should contain README.md
+    let section_dir = &section_dirs[0].path();
+    let section_readme = section_dir.join("README.md");
+    assert!(
+        section_readme.exists(),
+        "Section directory should contain README.md"
+    );
+
+    let readme_content = fs::read_to_string(&section_readme).unwrap();
+    assert!(
+        readme_content.starts_with("# "),
+        "Section README should start with a heading"
+    );
+
+    // Verify: page directories should exist
+    let page_dirs: Vec<_> = fs::read_dir(section_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().map_or(false, |t| t.is_dir()))
+        .collect();
+    assert!(
+        !page_dirs.is_empty(),
+        "Section should contain at least one page directory"
+    );
+
+    // Verify: each page directory should have README.md
+    for page_dir in &page_dirs {
+        let page_readme = page_dir.path().join("README.md");
+        assert!(
+            page_readme.exists(),
+            "Page directory {:?} should contain README.md",
+            page_dir.path()
+        );
+    }
+}
+
+#[test]
+fn test_convert_notebook_full() {
+    let input = match find_test_notebook() {
+        Some(p) => p,
+        None => {
+            eprintln!("Skipping test_convert_notebook_full: no .onetoc2 file in test_in/");
+            return;
+        }
+    };
+
+    let out_dir = setup_output_dir("notebook_full");
 
     let output = Command::new(binary_path())
         .args([
