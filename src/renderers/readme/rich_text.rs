@@ -1,4 +1,5 @@
-use onenote_parser::contents::{ParagraphStyling, RichText};
+use onenote_parser::property::rich_text::ParagraphStyling;
+use onenote_parser::contents::RichText;
 
 const FORMAT_NUMBERED_LIST: char = '\u{fffd}';
 

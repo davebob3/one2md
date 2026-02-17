@@ -598,6 +598,7 @@ dependencies = [
 [[package]]
 name = "parser"
 version = "0.0.1"
+source = "git+https://github.com/laurent22/joplin.git#ef32d53f72fe2ed8f02fe4f671eb56957258f811"
 dependencies = [
  "color-eyre",
  "console_error_panic_hook",
@@ -620,6 +621,7 @@ dependencies = [
 [[package]]
 name = "parser-macros"
 version = "0.1.0"
+source = "git+https://github.com/laurent22/joplin.git#ef32d53f72fe2ed8f02fe4f671eb56957258f811"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -629,6 +631,7 @@ dependencies = [
 [[package]]
 name = "parser-utils"
 version = "0.1.0"
+source = "git+https://github.com/laurent22/joplin.git#ef32d53f72fe2ed8f02fe4f671eb56957258f811"
 dependencies = [
  "bytes",
  "lazy_static",

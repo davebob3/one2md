@@ -1,5 +1,5 @@
 use crate::renderers::RenderContext;
-use onenote_parser::contents::{Outline, OutlineElement, OutlineGroup, OutlineItem};
+use onenote_parser::contents::{Outline, OutlineElement, OutlineItem};
 
 use super::content::render_element_contents;
 use super::list;
@@ -23,15 +23,11 @@ fn render_items(
                 render_element(element, depth, out, ctx);
             }
             OutlineItem::Group(group) => {
-                render_group(group, depth, out, ctx);
+                let new_depth = depth + group.child_level();
+                render_items(group.outlines(), new_depth, out, ctx);
             }
         }
     }
-}
-
-fn render_group(group: &OutlineGroup, depth: u8, out: &mut String, ctx: &mut RenderContext) {
-    let new_depth = depth + group.child_level();
-    render_items(group.outlines(), new_depth, out, ctx);
 }
 
 fn render_element(
