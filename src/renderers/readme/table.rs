@@ -30,7 +30,7 @@ pub fn render_table(table: &Table, ctx: &mut RenderContext) -> String {
                 .map(|element| render_element_contents(element, ctx, true))
                 .collect::<Vec<_>>()
                 .join(" ");
-            let single_line = cell_content.replace('\n', " ").trim().to_string();
+            let single_line = cell_content.trim().to_string();
             out.push_str(&single_line);
             out.push(' ');
         }

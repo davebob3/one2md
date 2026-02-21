@@ -221,6 +221,8 @@ If there are 1 or more indices, then:
   - `one2md` shall shall calculate the text style according to "Converting the paragraph style to Markdown" using the paragraph style and the text run style of each corresponding part.
   - `one2md` shall render the text into Markdown with the format "<starting markdown><text run><ending markdown>". Where the "<starting markdown>" is the calculated starting markdown text, the "<text run>" is the current part, and "<ending markdown>" is the calculated ending markdown text.
 
+When rendering a text run, `one2md`shall convert all verticle tabs ('\u{000B}') to the text "</br>".
+
 ##### Converting the paragraph style to Markdown
 
 Text runs will be surrounded by the appropriate start and end formatting strings based on the run style and/or paragraph style.
@@ -267,7 +269,7 @@ Then, for Each `TableRow`:
   - `one2md` shall render "| " (a pipe character and space) 
   - `one2md` shall render the `contents` into Markdown with some special exceptions:
   - `one2md` shall skip embedded tables.
-  - `one2md` shall render all text into a single line.
+  - `one2md` shall render all text into a single line. If there are multiple paragraphs in the text, `one2md` shall render "</br>"
 - `one2md` shall render a final "|" (pipe character).
 
 ## Module Architecture

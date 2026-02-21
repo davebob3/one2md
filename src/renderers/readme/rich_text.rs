@@ -2,6 +2,7 @@ use onenote_parser::property::rich_text::ParagraphStyling;
 use onenote_parser::contents::RichText;
 
 const FORMAT_NUMBERED_LIST: char = '\u{fffd}';
+const VERTICAL_TAB: char = '\u{000B}';
 
 /// Render RichText to Markdown.
 pub fn render_rich_text(text: &RichText, in_table: bool) -> String {
@@ -23,8 +24,9 @@ pub fn render_rich_text(text: &RichText, in_table: bool) -> String {
     if indices.is_empty() {
         // No text runs — apply paragraph style to entire text
         let (start_fmt, end_fmt) = formatting_markers(paragraph_style, None);
+        let text = sanitize_text(raw, in_table);
         result.push_str(&start_fmt);
-        result.push_str(&sanitize_text(raw, in_table));
+        result.push_str(&text);
         result.push_str(&end_fmt);
     } else {
         // Split text by run indices and apply per-run formatting
@@ -125,9 +127,11 @@ fn sanitize_text(text: &str, in_table: bool) -> String {
     let mut s = text.to_string();
     // Remove the list numbering sentinel character if present
     s = s.replace(FORMAT_NUMBERED_LIST, "");
+    // Replace verticle tabs with line breaks
+    s = s.replace(VERTICAL_TAB, "</br>");
     if in_table {
-        // In tables, newlines become spaces and pipes are escaped
-        s = s.replace('\n', " ").replace('|', "\\|");
+        // In tables, and pipes are escaped
+        s = s.replace('|', "\\|");
     }
     s
 }
